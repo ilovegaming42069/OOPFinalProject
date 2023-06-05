@@ -9,7 +9,7 @@ public class Story {
     UI ui;
     VisibilityManager vm;
     Player player = new Player();
-    SuperMonster monster = new Goblin();
+    SuperMonster monster;
 
     boolean castleKey;
 
@@ -150,11 +150,13 @@ public class Story {
         }
     }
     private void east(){
-        if(monster.hp <= 0){
+        if(castleKey){
             eastAlternative();
         }
         else{
             //Game display
+            //Spawns goblin
+            monster = new Goblin();
             ui.mainTextArea.setText("You encounter a "+ monster.name + "!");
             ui.choice1.setText("Fight");
             ui.choice2.setText("Run away");
