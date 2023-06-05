@@ -18,6 +18,7 @@ public class UI {
         //Set start button panel
         createStartButton(cHandler);
         createGameScreen(cHandler);
+        frame.setVisible(true);
     }
     private void createFrame(){
         frame = new JFrame();

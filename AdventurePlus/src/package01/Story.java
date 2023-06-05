@@ -1,12 +1,18 @@
 package package01;
 
-import package02.Knife;
+import package02.*;
+
+import java.util.Objects;
 
 public class Story {
     Game game;
     UI ui;
     VisibilityManager vm;
     Player player = new Player();
+    SuperMonster monster = new Goblin();
+
+    boolean castleKey;
+
     public Story(Game game, UI ui, VisibilityManager vm) {
         this.game = game;
         this.ui = ui;
@@ -18,7 +24,9 @@ public class Story {
         ui.hpNumberLabel.setText(""+player.hp);
         //Default current weapon
         player.currentWeapon = new Knife();
-        ui.weaponLabel.setText(player.currentWeapon.name);
+        ui.weaponTypeLabel.setText(player.currentWeapon.name);
+        //Default inventory
+        castleKey = false;
     }
     public void selectPosition(String nextPosition){
         switch (nextPosition) {
@@ -29,6 +37,12 @@ public class Story {
             case "north" -> north();
             case "west" -> west();
             case "east" -> east();
+            case "fight" -> fight();
+            case "playerAttack" -> playerAttack();
+            case "monsterAttack" -> monsterAttack();
+            case "win" -> win();
+            case "lose" -> lose();
+            case "toTitle" -> toTitle();
         }
     }
     public void castleDoor(){
@@ -45,17 +59,22 @@ public class Story {
         game.nextPosition4 = "";
     }
     private void openDoor(){
-        //Game display
-        ui.mainTextArea.setText("The door is locked.");
-        ui.choice1.setText("Continue");
-        ui.choice2.setText("");
-        ui.choice3.setText("");
-        ui.choice4.setText("");
-        //Game logic
-        game.nextPosition1 = "castleDoor";
-        game.nextPosition2 = "";
-        game.nextPosition3 = "";
-        game.nextPosition4 = "";
+        if(castleKey){
+            ending();
+        }
+        else{
+            //Game display
+            ui.mainTextArea.setText("The door is locked.");
+            ui.choice1.setText("Continue");
+            ui.choice2.setText("");
+            ui.choice3.setText("");
+            ui.choice4.setText("");
+            //Game logic
+            game.nextPosition1 = "castleDoor";
+            game.nextPosition2 = "";
+            game.nextPosition3 = "";
+            game.nextPosition4 = "";
+        }
     }
     private void punchDoor(){
         //Game display
@@ -68,7 +87,11 @@ public class Story {
         ui.choice3.setText("");
         ui.choice4.setText("");
         //Game logic
-        game.nextPosition1 = "castleDoor";
+        if(player.hp>0){
+            game.nextPosition1 = "castleDoor";
+        } else {
+            game.nextPosition1 = "lose";
+        }
         game.nextPosition2 = "";
         game.nextPosition3 = "";
         game.nextPosition4 = "";
@@ -88,7 +111,11 @@ public class Story {
     }
     private void north(){
         //Game display
-        ui.mainTextArea.setText("You found a river.\nYou drank some water the river.\n\n(You HP is recovered by 2)");
+        if(player.hp!=player.maxhp){
+            ui.mainTextArea.setText("You found a river.\nYou drank some water the river.\n\n(You HP is recovered by 2)");
+        }else{
+            ui.mainTextArea.setText("You found a river.\nYou're not thirsty.");
+        }
         player.hp = player.hp + 2;
         player.hpChecker();
         ui.hpNumberLabel.setText("" + player.hp);
@@ -103,12 +130,101 @@ public class Story {
         game.nextPosition4 = "";
     }
     private void west(){
+        if(Objects.equals(player.currentWeapon.name, "Long Sword")){
+            westAlternative();
+        }
+        else{
+            //Game display
+            ui.mainTextArea.setText("You walked into a forest.\nYou found a long sword\n\n(Long sword added to inventory)");
+            player.currentWeapon = new LongSword();
+            ui.weaponTypeLabel.setText(player.currentWeapon.name);
+            ui.choice1.setText("Go east");
+            ui.choice2.setText("");
+            ui.choice3.setText("");
+            ui.choice4.setText("");
+            //Game logic
+            game.nextPosition1 = "crossRoad";
+            game.nextPosition2 = "";
+            game.nextPosition3 = "";
+            game.nextPosition4 = "";
+        }
+    }
+    private void east(){
+        if(monster.hp <= 0){
+            eastAlternative();
+        }
+        else{
+            //Game display
+            ui.mainTextArea.setText("You encounter a "+ monster.name + "!");
+            ui.choice1.setText("Fight");
+            ui.choice2.setText("Run away");
+            ui.choice3.setText("");
+            ui.choice4.setText("");
+            //Game logic
+            game.nextPosition1 = "fight";
+            game.nextPosition2 = "crossRoad";
+            game.nextPosition3 = "";
+            game.nextPosition4 = "";
+        }
+    }
+    private void fight(){
         //Game display
-        ui.mainTextArea.setText("You found a river.\nYou drank some water the river.\n\n(You HP is recovered by 2)");
-        player.hp = player.hp + 2;
+        ui.mainTextArea.setText(monster.name + " HP: " + monster.hp + "\n\nWhat do you do?");
+        ui.choice1.setText("Attack");
+        ui.choice2.setText("Run away");
+        ui.choice3.setText("");
+        ui.choice4.setText("");
+        //Game logic
+        game.nextPosition1 = "playerAttack";
+        game.nextPosition2 = "crossRoad";
+        game.nextPosition3 = "";
+        game.nextPosition4 = "";
+    }
+    private void playerAttack(){
+        //Game display
+        int damage = new java.util.Random().nextInt(player.currentWeapon.damage);
+        ui.mainTextArea.setText("You attacked the " + monster.name + " and gave " + damage + " damage!");
+        monster.hp = monster.hp - damage;
+        ui.choice1.setText("Continue");
+        ui.choice2.setText("");
+        ui.choice3.setText("");
+        ui.choice4.setText("");
+        //Game logic
+        if(monster.hp>0){
+            game.nextPosition1 = "monsterAttack";
+        } else {
+            game.nextPosition1 = "win";
+        }
+        game.nextPosition2 = "";
+        game.nextPosition3 = "";
+        game.nextPosition4 = "";
+    }
+    private void monsterAttack(){
+        //Game display
+        int damage = new java.util.Random().nextInt(monster.attack);
+        ui.mainTextArea.setText("The " + monster.name + " attacked you and gave " + damage + " damage!");
+        player.hp = player.hp - damage;
         player.hpChecker();
         ui.hpNumberLabel.setText("" + player.hp);
-        ui.choice1.setText("Go south");
+        ui.choice1.setText("Continue");
+        ui.choice2.setText("");
+        ui.choice3.setText("");
+        ui.choice4.setText("");
+        //Game logic
+        if(player.hp>0){
+            game.nextPosition1 = "fight";
+        } else {
+            game.nextPosition1 = "lose";
+        }
+        game.nextPosition2 = "";
+        game.nextPosition3 = "";
+        game.nextPosition4 = "";
+    }
+    private void win(){
+        //Game display
+        ui.mainTextArea.setText("You defeated the monster!\nThe monster dropped something\n\n(Castle Key added to your inventory)");
+        castleKey = true;
+        ui.choice1.setText("Go west");
         ui.choice2.setText("");
         ui.choice3.setText("");
         ui.choice4.setText("");
@@ -118,8 +234,59 @@ public class Story {
         game.nextPosition3 = "";
         game.nextPosition4 = "";
     }
-    private void east(){
-
+    private void lose(){
+        //Game display
+        ui.mainTextArea.setText("You are dead!\n\n(GAME OVER)");
+        ui.choice1.setText("Restart");
+        ui.choice2.setText("");
+        ui.choice3.setText("");
+        ui.choice4.setText("");
+        //Game logic
+        game.nextPosition1 = "toTitle";
+        game.nextPosition2 = "";
+        game.nextPosition3 = "";
+        game.nextPosition4 = "";
+    }
+    private void ending(){
+        //Game display
+        ui.mainTextArea.setText("You unlocked the door.\nYou pushed the door forward, and it slowly creaks open.\n\n(TO BE CONTINUED)");
+        ui.choice1.setText("Restart");
+        ui.choice2.setText("");
+        ui.choice3.setText("");
+        ui.choice4.setText("");
+        //Game logic
+        game.nextPosition1 = "toTitle";
+        game.nextPosition2 = "";
+        game.nextPosition3 = "";
+        game.nextPosition4 = "";
+    }
+    private void westAlternative(){
+        ui.mainTextArea.setText("You walked into a forest.\nYou found nothing.");
+        ui.choice1.setText("Go east");
+        ui.choice2.setText("");
+        ui.choice3.setText("");
+        ui.choice4.setText("");
+        //Game logic
+        game.nextPosition1 = "crossRoad";
+        game.nextPosition2 = "";
+        game.nextPosition3 = "";
+        game.nextPosition4 = "";
+    }
+    private void eastAlternative(){
+        ui.mainTextArea.setText("The goblin is dead.\n\nThere is nothing left to do.");
+        ui.choice1.setText("Go west");
+        ui.choice2.setText("");
+        ui.choice3.setText("");
+        ui.choice4.setText("");
+        //Game logic
+        game.nextPosition1 = "crossRoad";
+        game.nextPosition2 = "";
+        game.nextPosition3 = "";
+        game.nextPosition4 = "";
+    }
+    private void toTitle(){
+        defaultSetup();
+        vm.showTitleScreen();
     }
 }
 
