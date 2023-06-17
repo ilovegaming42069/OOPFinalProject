@@ -1,4 +1,4 @@
-# AlgoProFinalProject
+# OOPFinalProject
 This project is an update for a source code of a text based RPG game i found online:
 
 
